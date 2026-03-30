@@ -1,14 +1,13 @@
 package com.fintech.payment_engine.service;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 import org.springframework.stereotype.Service;
-import java.time.Instant;
-import com.fintech.payment_engine.dto.PaymentRequest;
-import com.fintech.payment_engine.repository.TransactionRepository;
 
 import com.fintech.payment_engine.dto.PaymentRequest;
 import com.fintech.payment_engine.repository.TransactionRepository;
 
-import java.time.Instant;
 
 @Service
 public class FraudService {
@@ -20,12 +19,23 @@ public class FraudService {
     }
 
     public boolean isSuspicious(PaymentRequest req) {
-        // Rule 1: High amount
-    	if (req.getAmount().compareTo(new java.math.BigDecimal("10000.00")) >= 0) return true;
+        if (req.getAmount() == null) {
+            return false;
+        }
 
-        // Rule 2: Too many transactions in 60 seconds
+        if (req.getAmount().compareTo(new BigDecimal("10000.00")) >= 0) {
+            return true;
+        }
+
+        String sender = req.getSenderAccount() == null ? null : req.getSenderAccount().trim();
+        if (sender == null || sender.isBlank()) {
+            return false;
+        }
+
         Instant oneMinuteAgo = Instant.now().minusSeconds(60);
-        long recentCount = transactionRepository.countBySenderAccountAndCreatedAtAfter(req.getSenderAccount(), oneMinuteAgo);
+        long recentCount = transactionRepository.countBySenderAccountAndCreatedAtAfter(sender, oneMinuteAgo);
+
         return recentCount >= 3;
     }
+
 }

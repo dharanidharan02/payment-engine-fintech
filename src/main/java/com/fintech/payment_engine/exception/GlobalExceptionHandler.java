@@ -1,9 +1,16 @@
 package com.fintech.payment_engine.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,7 +28,24 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .orElse("Validation error");
+
         return new ApiError(400, "BAD_REQUEST", msg, req.getRequestURI());
+    }
+
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ApiError> handleIdempotencyConflict(
+            IdempotencyConflictException ex,
+            HttpServletRequest req) {
+
+        ApiError error = new ApiError(
+               
+                HttpStatus.CONFLICT.value(),
+                "CONFLICT",
+                ex.getMessage(),
+                req.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(Exception.class)

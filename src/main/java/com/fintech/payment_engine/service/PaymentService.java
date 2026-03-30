@@ -1,11 +1,18 @@
 package com.fintech.payment_engine.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fintech.payment_engine.dto.PaymentDetailsResponse;
 import com.fintech.payment_engine.dto.PaymentRequest;
 import com.fintech.payment_engine.dto.PaymentResponse;
+import com.fintech.payment_engine.exception.IdempotencyConflictException;
 import com.fintech.payment_engine.exception.NotFoundException;
 import com.fintech.payment_engine.model.DeclineReason;
 import com.fintech.payment_engine.model.IdempotencyRecord;
@@ -13,12 +20,6 @@ import com.fintech.payment_engine.model.Transaction;
 import com.fintech.payment_engine.model.TransactionDecision;
 import com.fintech.payment_engine.repository.IdempotencyRepository;
 import com.fintech.payment_engine.repository.TransactionRepository;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HexFormat;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 public class PaymentService {
@@ -37,6 +38,8 @@ public class PaymentService {
         this.fraudService = fraudService;
         this.paymentRules = paymentRules;
     }
+    
+
 
     @Transactional
     public PaymentResponse createPayment(PaymentRequest req, String idempotencyKey) {
@@ -49,8 +52,13 @@ public class PaymentService {
             if (existing.isPresent()) {
                 IdempotencyRecord record = existing.get();
                 if (!record.getRequestHash().equals(requestHash)) {
+//                	public class IdempotencyConflictException extends RuntimeException {
+//                	    public IdempotencyConflictException(String message) {
+//                	        super(message);
+//                	    }
+//                	}
                     // Same key used with different payload = client bug (FinTech systems must reject)
-                    throw new IllegalArgumentException("Idempotency-Key reuse with different request body is not allowed.");
+                	throw new IdempotencyConflictException("Idempotency-Key reuse with different request body is not allowed.");
                 }
                 Transaction oldTx = transactionRepository.findById(record.getTransactionId())
                         .orElseThrow(() -> new NotFoundException("Transaction not found for idempotency key."));
@@ -121,7 +129,7 @@ public class PaymentService {
         if (tx.getDecision() == TransactionDecision.DECLINED) {
             message = "Transaction declined: " + tx.getDeclineReason();
         } else if (tx.getDecision() == TransactionDecision.FLAGGED) {
-            message = "Transaction flagged for review";
+            message = "\"Transaction flagged for review: HIGH_AMOUNT\"";
         } else {
             message = "Transaction approved";
         }
@@ -133,6 +141,7 @@ public class PaymentService {
                 tx.getAmount(),
                 tx.getCurrency(),
                 tx.getCreatedAt(),
+                tx.getDeclineReason(),
                 message
         );
     }
@@ -171,4 +180,5 @@ public class PaymentService {
     private String safe(String s) {
         return s == null ? "" : s.trim();
     }
+    
 }

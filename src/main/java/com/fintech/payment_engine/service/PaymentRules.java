@@ -17,14 +17,21 @@ public class PaymentRules {
     public DeclineReason evaluateDeclineReason(PaymentRequest req) {
 
         if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            return DeclineReason.FRAUD_RULE_HIT; // or create INVALID_AMOUNT if you want
+            return DeclineReason.INVALID_AMOUNT; // or create INVALID_AMOUNT if you want
+            
         }
 
-        if (req.getAmount().compareTo(MAX_AMOUNT) > 0) {
-            return DeclineReason.LIMIT_EXCEEDED;
-        }
+//        if (req.getAmount().compareTo(MAX_AMOUNT) > 0) {
+//            return DeclineReason.LIMIT_EXCEEDED;
+//        }
 
-        if (req.getSenderAccount() != null && req.getSenderAccount().equals(req.getReceiverAccount())) {
+//        if (req.getSenderAccount() != null && req.getSenderAccount().equals(req.getReceiverAccount())) {
+//            return DeclineReason.SAME_SENDER_RECEIVER;
+//        }
+        String sender = req.getSenderAccount() == null ? null : req.getSenderAccount().trim();
+        String receiver = req.getReceiverAccount() == null ? null : req.getReceiverAccount().trim();
+
+        if (sender != null && sender.equals(receiver)) {
             return DeclineReason.SAME_SENDER_RECEIVER;
         }
 

@@ -40,4 +40,17 @@ public class PaymentController {
     public List<PaymentDetailsResponse> list(@RequestParam(defaultValue = "20") int limit) {
         return paymentService.listTransactions(limit);
     }
+    
+	/*
+	 * @PostMapping
+	 * 
+	 * @ResponseStatus(HttpStatus.CREATED) public PaymentResponse create(
+	 * 
+	 * @RequestHeader(value = "Idempotency-Key", required = false) String
+	 * idempotencyKey,
+	 * 
+	 * @Valid @RequestBody PaymentRequest request) {
+	 * 
+	 * return paymentService.createPayment(request, idempotencyKey); }
+	 */
 }

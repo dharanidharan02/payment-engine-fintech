@@ -10,3 +10,4 @@ import com.fintech.payment_engine.model.IdempotencyRecord;
 public interface IdempotencyRepository extends JpaRepository<IdempotencyRecord, UUID> {
     Optional<IdempotencyRecord> findByIdempotencyKey(String idempotencyKey);
 }
+
