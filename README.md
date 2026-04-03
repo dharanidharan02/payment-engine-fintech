@@ -105,8 +105,11 @@ The system follows a layered microservice architecture:
 - **Service Layer** → Contains business logic, validation, and fraud rules
 - **Repository Layer** → Manages database interactions using JPA
 - **Model Layer** → Defines entities and enums for transaction domain
-- Publishes payment transaction events to Kafka topic `payment-events` for asynchronous event-driven processing
+- producer publishes payment event
+- consumer simulates downstream system
 
 Transaction flow:
 
-Client → Controller → Service → Validation → Fraud Check → Decision → Database → Response
+Client → Payment API → Validation/Fraud Rules → PostgreSQL
+                                 ↓
+                              Kafka Producer → payment-events → Kafka Consumer
