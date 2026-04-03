@@ -28,19 +28,24 @@ public class PaymentService {
     private final IdempotencyRepository idempotencyRepository;
     private final FraudService fraudService;
     private final PaymentRules paymentRules;
+    private final KafkaProducerService kafkaProducerService;
 
     public PaymentService(TransactionRepository transactionRepository,
                           IdempotencyRepository idempotencyRepository,
                           FraudService fraudService,
-                          PaymentRules paymentRules) {
+                          PaymentRules paymentRules,
+                          KafkaProducerService kafkaProducerService) {
         this.transactionRepository = transactionRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.fraudService = fraudService;
         this.paymentRules = paymentRules;
+        this.kafkaProducerService = kafkaProducerService;
+
     }
     
+   
 
-
+    
     @Transactional
     public PaymentResponse createPayment(PaymentRequest req, String idempotencyKey) {
 
@@ -80,6 +85,7 @@ public class PaymentService {
         Transaction saved = createAndSave(req);
         return toCreateResponse(saved);
     }
+    
 
     public PaymentDetailsResponse getTransaction(UUID id) {
         Transaction tx = transactionRepository.findById(id)
@@ -105,25 +111,24 @@ public class PaymentService {
         tx.setAmount(req.getAmount());
         tx.setCurrency(req.getCurrency());
 
-        // A) Hard DECLINE rules (deterministic)
         DeclineReason declineReason = paymentRules.evaluateDeclineReason(req);
         if (declineReason != null) {
             tx.setDecision(TransactionDecision.DECLINED);
             tx.setDeclineReason(declineReason);
-            return transactionRepository.save(tx);
-        }
-
-        // B) Fraud check (FLAG if suspicious)
-        boolean suspicious = fraudService.isSuspicious(req);
-        if (suspicious) {
+        } else if (fraudService.isSuspicious(req)) {
             tx.setDecision(TransactionDecision.FLAGGED);
         } else {
             tx.setDecision(TransactionDecision.APPROVED);
         }
 
-        return transactionRepository.save(tx);
-    }
+        Transaction saved = transactionRepository.save(tx);
 
+        String event = "Transaction " + saved.getId() + " status: " + saved.getDecision();
+        kafkaProducerService.sendEvent(event);
+
+        return saved;
+    }
+    
     private PaymentResponse toCreateResponse(Transaction tx) {
         String message;
         if (tx.getDecision() == TransactionDecision.DECLINED) {
@@ -180,5 +185,6 @@ public class PaymentService {
     private String safe(String s) {
         return s == null ? "" : s.trim();
     }
+    
     
 }
