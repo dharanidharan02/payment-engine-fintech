@@ -6,6 +6,8 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ public class PaymentService {
     private final PaymentRules paymentRules;
     private final KafkaProducerService kafkaProducerService;
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+    
     public PaymentService(TransactionRepository transactionRepository,
                           IdempotencyRepository idempotencyRepository,
                           FraudService fraudService,
