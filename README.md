@@ -13,6 +13,7 @@ This project demonstrates **payment validation**, **fraud screening**, **idempot
 - Structured exception handling with appropriate HTTP status codes
 - PostgreSQL persistence for transaction and idempotency records
 - Publishes and consumes payment transaction events using Apache Kafka for event-driven processing
+- Added transaction history filtering by decision status to support operational lookup and monitoring use cases.
 
 ## Tech Stack
 
