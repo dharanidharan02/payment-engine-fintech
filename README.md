@@ -12,6 +12,7 @@ This project demonstrates **payment validation**, **fraud screening**, **idempot
 - Conflict detection for reused idempotency keys with different payloads
 - Structured exception handling with appropriate HTTP status codes
 - PostgreSQL persistence for transaction and idempotency records
+- Publishes and consumes payment transaction events using Apache Kafka for event-driven processing
 
 ## Tech Stack
 
@@ -108,8 +109,12 @@ The system follows a layered microservice architecture:
 - producer publishes payment event
 - consumer simulates downstream system
 
-Transaction flow:
+## Event-Driven Flow
 
-Client → Payment API → Validation/Fraud Rules → PostgreSQL
-                                 ↓
-                              Kafka Producer → payment-events → Kafka Consumer
+The payment engine publishes transaction outcome events to Kafka after processing each payment.
+
+Flow:
+Client Request → Payment API → Validation/Fraud Rules → PostgreSQL  
+→ Kafka Producer → `payment-events` topic → Kafka Consumer
+
+Kafka is used to simulate asynchronous downstream processing for payment events such as audit, monitoring, or future notification services.
