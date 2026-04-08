@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fintech.payment_engine.dto.PaymentDetailsResponse;
 import com.fintech.payment_engine.dto.PaymentRequest;
 import com.fintech.payment_engine.dto.PaymentResponse;
+import com.fintech.payment_engine.model.TransactionDecision;
 import com.fintech.payment_engine.service.PaymentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,8 +63,20 @@ public class PaymentController {
         return paymentService.getTransaction(id);
     }
 
+//    @GetMapping
+//    public List<PaymentDetailsResponse> list(@RequestParam(defaultValue = "20") int limit) {
+//        return paymentService.listTransactions(limit);
+//    }
+    
     @GetMapping
-    public List<PaymentDetailsResponse> list(@RequestParam(defaultValue = "20") int limit) {
+    public List<PaymentDetailsResponse> list(
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) TransactionDecision status) {
+
+        if (status != null) {
+            return paymentService.listTransactionsByStatus(status, limit);
+        }
+
         return paymentService.listTransactions(limit);
     }
     

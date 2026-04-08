@@ -190,5 +190,15 @@ public class PaymentService {
         return s == null ? "" : s.trim();
     }
     
+    public List<PaymentDetailsResponse> listTransactionsByStatus(TransactionDecision decision, int limit) {
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+
+        return transactionRepository.findByDecisionOrderByCreatedAtDesc(decision)
+                .stream()
+                .limit(safeLimit)
+                .map(this::toDetailsResponse)
+                .toList();
+    }
+    
     
 }
